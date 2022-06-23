@@ -1,4 +1,4 @@
-# firebase-node-docker
+# Firebase Project in Firebase Emulator
 
 ## firabse console
 
@@ -8,36 +8,69 @@ firestore、functions、storageを有効化しておく。
 ## dockerコンテナをビルドして起動
 
 ```sh
-docker-compose build
-docker-compose up -d
+$ docker-compose build
+$ docker-compose up -d
 ```
 
-## コンテナにログイン
+## コンテナに入る
 
 ```sh
-docker-compose exec firebase bash
-firebase login
+$ docker-compose exec firebase bash
 ```
+
+## firebaseプロジェクトの構築
+
+Dockerコンテナ上でFirebaseプロジェクトを立ち上げる手順です。
+
+### Firebaseにログインする
+
+```sh
+$ firebase login --no-localhost
 ```
-root@50ee7dbd0e4e:/app# firebase login
-i  Firebase optionally collects CLI usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you.
 
-? Allow Firebase to collect CLI usage and error reporting information? No
+コンテナで使用中の場合は`--no-localhost`オプションを指定して、ログインする。  
+これがないとlocalhostへのリダイレクトが発生して失敗する。
 
-Visit this URL on this device to log in:
-https://accounts.google.com/o/oauth2/auth?client_id=...省略
+以下のように成功するとログインのメッセージが出る
+
+```text
+✔  Success! Logged in as ******@****.****
+```
+
+**デプロイ用のトークンを取得する**
+
+FirebaseをCIデプロイする場合はトークンを取得する必要があるため、以下のコマンドを実行する。
+
+```
+$ firebase login:ci --no-localhost
+```
+
+認証完了すると、以下のように表示される。  
+`1//xxx...`で始まるトークンを保存しておこう。
+
+```text
 Waiting for authentication...
 
-✔  Success! Logged in as ******@gmail.com
+✔  Success! Use this token to login on a CI server:
 
-root@50ee7dbd0e4e:/app# firebase init
+1//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Firebaseプロジェクトの初期化と設定を行う
+
+```text
+$ firebase init
 
      ######## #### ########  ######## ########     ###     ######  ########
      ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
      ######    ##  ########  ######   ########  #########  ######  ######
      ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
      ##       #### ##     ## ######## ########  ##     ##  ######  ########
+```
 
+プロジェクトディレクトリを聞かれるので、/appを選択
+
+```text
 You're about to initialize a Firebase project in this directory:
 
   /app
@@ -136,7 +169,7 @@ i  Writing project information to .firebaserc...
 ✔  Firebase initialization complete!
 ```
 
-## firebase.jsonを書き換え。
+## firebase.jsonを以下のように書き換え
 
 `"host": "0.0.0.0",`を各emulatorの行に書き足す。
 
@@ -192,12 +225,16 @@ i  Writing project information to .firebaserc...
   }
 }
 ```
+
 ## エミュレータ起動
 
-`firebase emulators:start` でエミュレータを起動
+コンテナ内で`firebase emulators:start` でエミュレータを起動
 
+```sh
+$ firebase emulators:start
 ```
-root@50ee7dbd0e4e:/app# firebase emulators:start
+
+```text
 i  emulators: Starting emulators: auth, functions, firestore, hosting, storage
 ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: database, pubsub
 ✔  functions: Using node@16 from host.
@@ -231,7 +268,6 @@ i  functions: Watching "/app/functions" for Cloud Functions...
   Other reserved ports: 4500
 
 Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
-``` 
+```
 
 [http://localhost:4000](http://localhost:4000) からエミュレータのUIにアクセスできるようになる。
-
